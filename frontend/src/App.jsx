@@ -5,7 +5,7 @@ import ResultDisplay from './components/ResultDisplay';
 import LoadingSpinner from './components/LoadingSpinner';
 import './App.css';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL;
 
 function App() {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -37,7 +37,7 @@ function App() {
 
       console.log('📤 Uploading resume:', selectedFile.name);
 
-      const response = await axios.post(`${API_URL}/analyze-resume`, formData, {
+      const response = await axios.post(`${API_URL}/api/analyze-resume`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
