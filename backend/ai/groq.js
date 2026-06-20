@@ -194,11 +194,73 @@ ${resumeText}`;
 }
 
 // ─────────────────────────────────────────────────────
+// Deterministic Resume Pre-Check
+// Quick validation before calling LLM — saves API calls
+// ─────────────────────────────────────────────────────
+function looksLikeResume(text) {
+  const lower = text.toLowerCase();
+  let signals = 0;
+
+  // Signal 1: Has email address
+  if (/[\w.-]+@[\w.-]+\.\w{2,}/i.test(text)) signals++;
+
+  // Signal 2: Has phone number
+  if (/(?:\+?\d{1,3}[-.\s]?)?(?:\(?\d{2,4}\)?[-.\s]?)?\d{3,4}[-.\s]?\d{3,4}/.test(text)) signals++;
+
+  // Signal 3: Has resume section headers (at least 2)
+  const sectionHeaders = ['experience', 'education', 'skills', 'projects', 'certifications',
+    'work experience', 'technical skills', 'professional experience', 'qualifications',
+    'summary', 'objective', 'achievements', 'portfolio'];
+  let headerCount = 0;
+  for (const header of sectionHeaders) {
+    if (lower.includes(header)) headerCount++;
+  }
+  if (headerCount >= 2) signals++;
+
+  // Signal 4: Has job titles / role keywords
+  const jobTitles = /\b(engineer|developer|analyst|manager|intern|designer|architect|consultant|specialist|coordinator|scientist|researcher|administrator)\b/gi;
+  if (jobTitles.test(lower)) signals++;
+
+  // Signal 5: Has at least 3 technical skills
+  const techSkills = ['javascript', 'python', 'java', 'react', 'node', 'sql', 'html', 'css',
+    'docker', 'aws', 'git', 'mongodb', 'typescript', 'c++', 'angular', 'vue', 'flask',
+    'django', 'express', 'kubernetes', 'tensorflow', 'pytorch', 'pandas', 'linux',
+    'spring', 'flutter', 'swift', 'kotlin', 'php', 'ruby', 'go', 'rust', 'redis',
+    'graphql', 'firebase', 'azure', 'gcp', 'jenkins', 'terraform', 'excel', 'tableau',
+    'power bi', 'scikit-learn', 'keras', 'numpy', 'matlab', 'selenium', 'jira'];
+  let skillHits = 0;
+  for (const skill of techSkills) {
+    if (lower.includes(skill)) skillHits++;
+  }
+  if (skillHits >= 3) signals++;
+
+  console.log(`📋 Resume pre-check: ${signals}/5 signals detected (need ≥2)`);
+
+  // Need at least 2 out of 5 signals to consider it a resume
+  return signals >= 2;
+}
+
+// ─────────────────────────────────────────────────────
 // MAIN EXPORTED FUNCTION: Orchestrator
 // Keeps the same signature the route expects:
 //   analyzeResume(resumeText, targetField) → { isResume, role, missingSkills, atsScore, targetImprovements, ... }
 // ─────────────────────────────────────────────────────
 async function analyzeResume(resumeText, targetField) {
+  // ── Pre-check: Deterministic resume validation (before LLM call) ──
+  if (!looksLikeResume(resumeText)) {
+    console.log('🚫 Document failed deterministic resume pre-check');
+    return {
+      isResume: false,
+      role: null,
+      missingSkills: [],
+      atsScore: 0,
+      atsBreakdown: {},
+      detectedSkills: [],
+      targetImprovements: [],
+      roadmap: null,
+    };
+  }
+
   // ── ATS Score: Deterministic formula (never from LLM) ──
   const { atsScore, atsBreakdown, detectedSkills } = calculateAtsScore(resumeText);
   console.log(`📊 Deterministic ATS Score: ${atsScore}/100`);
@@ -207,7 +269,7 @@ async function analyzeResume(resumeText, targetField) {
   const step1 = await predictRole(resumeText);
   console.log('✅ Step 1 result:', step1);
 
-  // If not a resume, bail out immediately
+  // If LLM also says not a resume, bail out
   if (step1.isResume === false) {
     return {
       isResume: false,
