@@ -1,4 +1,5 @@
 const Groq = require('groq-sdk');
+const { calculateAtsScore } = require('./atsScorer');
 
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY ,
@@ -14,29 +15,71 @@ const MAX_RETRIES = 3;
 async function predictRole(resumeText) {
   console.log('🔍 STEP 1: Predicting role from resume (unbiased)...');
 
-  const prompt = `You are an expert resume analyzer.
+  const prompt = `You are an expert resume analyzer and career advisor.
 
-IMPORTANT:
+IMPORTANT RULES:
 - Ignore any user preference or desired role
-- Analyze ONLY the resume content
+- Analyze ONLY the resume content below
 - Do NOT copy any provided role
 - Be objective and accurate
+- Base your prediction STRICTLY on the evidence in the resume
 
-Task:
-Predict the most suitable job role.
-Also determine if this text is actually a resume. If not, set isResume to false.
-Also provide an ATS score from 0-100 based on resume quality.
+TASK 1 — RESUME VALIDATION:
+Determine if this text is actually a resume. If it is not a resume (e.g., a random document, article, letter), set isResume to false.
 
-Return ONLY valid JSON:
+TASK 2 — ROLE PREDICTION:
+Based on the skills, experience, projects, and certifications in the resume, predict the SINGLE most suitable job role. Choose from or closely map to one of these canonical roles:
+- Frontend Developer
+- Backend Developer
+- Full Stack Developer
+- Software Engineer
+- Mobile Developer
+- DevOps Engineer
+- Cloud Engineer
+- Data Analyst
+- Data Scientist
+- Machine Learning Engineer
+- AI Engineer
+- Data Engineer
+- QA Engineer / SDET
+- Cybersecurity Analyst
+- Product Manager
+- UI/UX Designer
+- Technical Writer
+- Database Administrator
+- Systems Administrator
+- Network Engineer
+- Embedded Systems Engineer
+- Game Developer
+- Blockchain Developer
+- Site Reliability Engineer
+
+You may use a closely related title if none above fits perfectly, but prefer the list above.
+
+Provide the specific skills, experience, and projects from the resume that support your prediction in the "evidence" field.
+
+TASK 3 — MISSING SKILLS:
+Identify 5-10 skills that are commonly required for the PREDICTED ROLE but are NOT present in this resume.
+- Never return generic skills like "communication" or "teamwork" unless highly role-specific.
+- Only return skills that are genuinely missing from the resume but commonly required for the predicted role.
+- Be specific: prefer "TypeScript" over "programming", prefer "Docker" over "tools".
+
+TASK 4 — EXPERIENCE LEVEL:
+Classify as: Intern, Junior, Mid-Level, Senior, Lead, Principal, Staff, or Director.
+
+Return ONLY valid JSON (no markdown, no explanation outside JSON):
 
 {
   "isResume": true,
   "predicted_role": "",
-  "confidence": "",
+  "confidence": "high|medium|low",
   "experience_level": "",
-  "detected_skills": [],
-  "missing_skills": [],
-  "ats_score": 0
+  "evidence": {
+    "key_skills": [],
+    "key_experience": [],
+    "key_projects": []
+  },
+  "missing_skills": []
 }
 
 If the text is NOT a resume, return:
@@ -45,9 +88,8 @@ If the text is NOT a resume, return:
   "predicted_role": null,
   "confidence": null,
   "experience_level": null,
-  "detected_skills": [],
-  "missing_skills": [],
-  "ats_score": 0
+  "evidence": { "key_skills": [], "key_experience": [], "key_projects": [] },
+  "missing_skills": []
 }
 
 Resume:
@@ -62,12 +104,15 @@ ${resumeText}`;
 async function skillGapAnalysis(resumeText, targetRole) {
   console.log(`🎯 STEP 2: Skill gap analysis for target role: "${targetRole}"...`);
 
-  const prompt = `You are a strict career evaluator.
+  const prompt = `You are a strict career evaluator with deep industry knowledge.
 
-IMPORTANT:
-- Compare the resume with the target role below
-- Be honest and critical (avoid generic answers)
-- Give specific, actionable improvements
+IMPORTANT RULES:
+- Compare the resume CAREFULLY with the target role below
+- Be honest and critical — avoid generic, boilerplate answers
+- Give SPECIFIC, ACTIONABLE improvements
+- Never return generic skills like "communication" or "problem solving"
+- Only return skills that are MISSING from the uploaded resume but COMMONLY REQUIRED for the target role
+- Be specific: prefer "Kubernetes" over "containerization tools", prefer "PyTorch" over "ML frameworks"
 
 Target Role: ${targetRole}
 
@@ -80,6 +125,68 @@ Return ONLY valid JSON:
   "project_suggestions": []
 }
 
+CONSTRAINTS:
+- missing_skills: 5-10 specific technical skills the resume lacks for this role
+- missing_tools: 3-7 specific tools/platforms the resume should mention
+- resume_improvements: 3-5 specific, actionable tips to improve the resume for this role
+- project_suggestions: 2-4 specific project ideas that demonstrate readiness for this role
+
+Resume:
+${resumeText}`;
+
+  return await callGroq(prompt);
+}
+
+// ─────────────────────────────────────────────────────
+// STEP 3: Career Roadmap Generation
+// ─────────────────────────────────────────────────────
+async function generateRoadmap(resumeText, predictedRole, targetRole, missingSkills) {
+  const effectiveRole = (targetRole && targetRole.trim().length > 0) ? targetRole.trim() : predictedRole;
+  console.log(`🗺️ STEP 3: Generating career roadmap for role: "${effectiveRole}"...`);
+
+  const prompt = `You are a senior career coach and technical mentor.
+
+Based on the resume below, create a PERSONALIZED career roadmap for the role: "${effectiveRole}".
+
+The candidate's predicted current role is: "${predictedRole}"
+${missingSkills && missingSkills.length > 0 ? `Known missing skills: ${missingSkills.join(', ')}` : ''}
+
+IMPORTANT RULES:
+- Be specific and actionable — no vague advice
+- Tailor everything to what the resume actually contains
+- Prioritize recommendations from HIGHEST IMPACT to LOWEST IMPACT
+- Different resumes must get different roadmaps
+- Focus on practical, industry-relevant advice
+
+Return ONLY valid JSON:
+
+{
+  "skills_to_learn": [
+    { "skill": "", "priority": "high|medium|low", "reason": "" }
+  ],
+  "tools_to_master": [
+    { "tool": "", "priority": "high|medium|low", "reason": "" }
+  ],
+  "certifications": [
+    { "name": "", "provider": "", "priority": "high|medium|low" }
+  ],
+  "project_recommendations": [
+    { "title": "", "description": "", "skills_demonstrated": [] }
+  ],
+  "learning_path": {
+    "month_1_3": { "focus": "", "goals": [] },
+    "month_4_6": { "focus": "", "goals": [] },
+    "month_7_12": { "focus": "", "goals": [] }
+  }
+}
+
+CONSTRAINTS:
+- skills_to_learn: 5-8 skills, ordered by priority (highest impact first)
+- tools_to_master: 4-6 tools, ordered by priority (highest impact first)
+- certifications: 2-4 relevant certifications
+- project_recommendations: 2-3 portfolio-worthy projects
+- learning_path: realistic 12-month plan with specific, measurable goals
+
 Resume:
 ${resumeText}`;
 
@@ -89,9 +196,13 @@ ${resumeText}`;
 // ─────────────────────────────────────────────────────
 // MAIN EXPORTED FUNCTION: Orchestrator
 // Keeps the same signature the route expects:
-//   analyzeResume(resumeText, targetField) → { isResume, role, missingSkills, atsScore, targetImprovements }
+//   analyzeResume(resumeText, targetField) → { isResume, role, missingSkills, atsScore, targetImprovements, ... }
 // ─────────────────────────────────────────────────────
 async function analyzeResume(resumeText, targetField) {
+  // ── ATS Score: Deterministic formula (never from LLM) ──
+  const { atsScore, atsBreakdown, detectedSkills } = calculateAtsScore(resumeText);
+  console.log(`📊 Deterministic ATS Score: ${atsScore}/100`);
+
   // ── Step 1: Unbiased prediction (NEVER sees targetField) ──
   const step1 = await predictRole(resumeText);
   console.log('✅ Step 1 result:', step1);
@@ -103,17 +214,26 @@ async function analyzeResume(resumeText, targetField) {
       role: null,
       missingSkills: [],
       atsScore: 0,
+      atsBreakdown: {},
+      detectedSkills: [],
       targetImprovements: [],
+      roadmap: null,
     };
   }
 
-  // Build base result from Step 1
+  // Build base result from Step 1 + deterministic ATS
   const result = {
     isResume: true,
     role: step1.predicted_role,
+    confidence: step1.confidence || 'medium',
+    experienceLevel: step1.experience_level || '',
+    evidence: step1.evidence || {},
     missingSkills: step1.missing_skills || [],
-    atsScore: step1.ats_score || 0,
+    atsScore,
+    atsBreakdown,
+    detectedSkills,
     targetImprovements: [],
+    roadmap: null,
   };
 
   // ── Step 2: Skill gap (only if user provided a target field) ──
@@ -138,6 +258,26 @@ async function analyzeResume(resumeText, targetField) {
     }
 
     result.targetImprovements = improvements;
+
+    // Override missing skills with target-role-specific ones when target is provided
+    if (step2.missing_skills && step2.missing_skills.length > 0) {
+      result.missingSkills = step2.missing_skills;
+    }
+  }
+
+  // ── Step 3: Career Roadmap ──
+  try {
+    const step3 = await generateRoadmap(
+      resumeText,
+      step1.predicted_role,
+      targetField,
+      result.missingSkills,
+    );
+    console.log('✅ Step 3 result:', step3);
+    result.roadmap = step3;
+  } catch (err) {
+    console.error('⚠️ Roadmap generation failed (non-critical):', err.message);
+    result.roadmap = null;
   }
 
   return result;

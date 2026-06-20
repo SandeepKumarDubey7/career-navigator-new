@@ -17,6 +17,18 @@ const resumeSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  atsBreakdown: {
+    type: mongoose.Schema.Types.Mixed,
+    default: {},
+  },
+  detectedSkills: {
+    type: [String],
+    default: [],
+  },
+  experienceLevel: {
+    type: String,
+    required: false,
+  },
   targetField: {
     type: String,
     required: false,
@@ -24,6 +36,10 @@ const resumeSchema = new mongoose.Schema({
   targetImprovements: {
     type: [String],
     default: [],
+  },
+  roadmap: {
+    type: mongoose.Schema.Types.Mixed,
+    default: null,
   },
   createdAt: {
     type: Date,

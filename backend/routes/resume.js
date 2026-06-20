@@ -69,8 +69,12 @@ router.post('/analyze-resume', upload.single('resume'), async (req, res) => {
       role: analysis.role,
       missingSkills: analysis.missingSkills,
       atsScore: analysis.atsScore,
+      atsBreakdown: analysis.atsBreakdown || {},
+      detectedSkills: analysis.detectedSkills || [],
+      experienceLevel: analysis.experienceLevel || '',
       targetField: targetField,
       targetImprovements: analysis.targetImprovements || [],
+      roadmap: analysis.roadmap || null,
     });
 
     console.log(`💾 Saved to database: ${savedResume._id}`);
@@ -80,10 +84,15 @@ router.post('/analyze-resume', upload.single('resume'), async (req, res) => {
       success: true,
       data: {
         role: analysis.role,
+        confidence: analysis.confidence || 'medium',
+        experienceLevel: analysis.experienceLevel || '',
         missingSkills: analysis.missingSkills,
         atsScore: analysis.atsScore,
+        atsBreakdown: analysis.atsBreakdown || {},
+        detectedSkills: analysis.detectedSkills || [],
         targetField: targetField,
         targetImprovements: analysis.targetImprovements || [],
+        roadmap: analysis.roadmap || null,
       },
     });
   } catch (error) {

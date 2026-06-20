@@ -279,7 +279,7 @@ body {
 .footer {
   text-align: center;
   padding: 1.5rem;
-  color: #888;
+  color: #333;
   font-size: 0.85rem;
   border-top: 1px solid #e5e7eb;
 }
@@ -296,5 +296,232 @@ body {
 
   .card {
     padding: 1.25rem;
+  }
+}
+
+/* ATS Breakdown */
+.ats-breakdown {
+  margin-top: 8px;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 8px;
+}
+
+.breakdown-row {
+  display: grid;
+  grid-template-columns: 1fr 120px 32px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  padding: 6px 0;
+}
+
+.breakdown-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.breakdown-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #444;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.breakdown-weight {
+  font-size: 0.7rem;
+  color: #aaa;
+  flex-shrink: 0;
+}
+
+.breakdown-bar-bg {
+  width: 100%;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.breakdown-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+.breakdown-score {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: right;
+}
+
+.breakdown-details {
+  grid-column: 1 / -1;
+  font-size: 0.75rem;
+  color: #999;
+  margin: -2px 0 4px 0;
+}
+
+/* Roadmap Sections */
+.roadmap-section {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.roadmap-section:first-child {
+  border-top: none;
+  margin-top: 8px;
+}
+
+.roadmap-subtitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-bottom: 10px;
+}
+
+.roadmap-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.roadmap-item {
+  padding: 10px 12px;
+  border-radius: 6px;
+  border-left: 4px solid #4f46e5;
+  background: #f9fafb;
+}
+
+.roadmap-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.roadmap-item-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.roadmap-priority {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.roadmap-item-reason {
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+/* Learning Path */
+.learning-path {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.learning-phase {
+  padding: 12px;
+  border-radius: 8px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
+
+.phase-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.phase-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.phase-focus {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.phase-goals {
+  padding-left: 20px;
+  margin: 0;
+}
+
+.phase-goals li {
+  font-size: 0.85rem;
+  color: #555;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+/* Footer — Digital Heroes */
+.footer-info {
+  margin: 8px 0;
+}
+
+.footer-info p {
+  font-size: 0.85rem;
+  color: #333;
+  margin: 2px 0;
+  font-weight: 500;
+}
+
+.digital-heroes-btn {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 10px 24px;
+  background: #4f46e5;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.digital-heroes-btn:hover {
+  background: #3730a3;
+}
+
+/* Responsive additions */
+@media (max-width: 600px) {
+  .breakdown-row {
+    grid-template-columns: 1fr 80px 28px;
+  }
+
+  .breakdown-name {
+    font-size: 0.72rem;
+  }
+
+  .roadmap-item-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .phase-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
   }
 }
