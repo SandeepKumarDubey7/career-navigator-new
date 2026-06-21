@@ -296,4 +296,4 @@ Built for [Digital Heroes](https://digitalheroesco.com)
 - [ ] User authentication and dashboard to view past analyses
 - [ ] Support for more file formats (TXT, LinkedIn PDF exports)
 - [ ] Resume comparison — track improvement over time
-- [ ] Interview preparation module matching predicted roles
+- [ ] Interview preparation module matching predicted roles.
