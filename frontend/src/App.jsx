@@ -92,18 +92,7 @@ function App() {
 
       <footer className="footer">
         <p>AI Career Navigator — Powered by Groq</p>
-        <div className="footer-info">
-          <p>Name: Sandeep Kumar Dubey</p>
-          <p>Email: sandeepdk180@gmail.com</p>
-        </div>
-        <a
-          href="https://digitalheroesco.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="digital-heroes-btn"
-        >
-          Built for Digital Heroes
-        </a>
+        
       </footer>
     </div>
   );
